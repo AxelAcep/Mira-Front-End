@@ -12,6 +12,7 @@ from Pages.Management import Management
 width = 1600
 height = 900
 
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()

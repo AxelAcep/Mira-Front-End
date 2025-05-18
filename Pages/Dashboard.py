@@ -1,7 +1,10 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QFrame, QHBoxLayout, QGraphicsDropShadowEffect, QGridLayout, QPushButton, QLineEdit
+from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QFrame, QHBoxLayout, QGraphicsDropShadowEffect, QGridLayout, QPushButton, QLineEdit, QApplication
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QPixmap
 import os
+import sys
+import requests
+from model import AppState
 
 width = 1600
 height = 900
@@ -35,8 +38,31 @@ class Dashboard(QWidget):
             )
     
     def loginPressed(self):
-        print("Login button clicked")
-        QTimer.singleShot(0, self.switch_to_dashboard)
+        nidn = self.nidn_input.text()
+        passworrd = self.password_input.text()
+
+        print("Nidn:", nidn)
+        print("Password:", passworrd)
+
+        try:
+            response = requests.post("http://localhost:5500/api/user/login", json={"nidn": nidn, "password": passworrd})
+            if response.status_code == 200:
+                data = response.json()
+                state = AppState()
+                state.set_auth(token= data.get("token"), nidn= data.get("dosen").get("nidn"), nama= data.get("dosen").get("nama"), profil= data.get("dosen").get("fotoProfil"))
+                print("Token:", state.token)
+                print("NIDN:", state.nidn) 
+                print("Nama:", state.nama)
+                print("Profil:", state.profil)
+                print(data) 
+                self.error_label.setVisible(False)
+                QTimer.singleShot(0, self.switch_to_dashboard) 
+            else:
+                print("Login failed:", response.status_code, response.text)
+                self.error_label.setVisible(True)
+
+        except Exception as e:
+            print("Error:", e)
 
     def switch_to_dashboard(self):
         # Mengakses halaman dashboard dari MainWindow dan beralih ke halaman tersebut
@@ -210,6 +236,11 @@ class Dashboard(QWidget):
         # Header: Judul + Tombol X
         header_layout = QHBoxLayout()
         title_label = create_label("Masuk untuk Mira", font_size=24, bold=True)
+        self.error_label = QLabel("Email atau password salah.")
+        self.error_label.setStyleSheet("color: red; font-size: 16px; font-family: 'Nunito Sans', 'Segoe UI', sans-serif;")
+        self.error_label = create_label("Gagal Masuk", font_size=16, color="red")
+        self.error_label.setVisible(False)
+
         close_btn = QPushButton("X")
         close_btn.setFixedSize(30, 30)
         close_btn.setStyleSheet("""
@@ -232,7 +263,7 @@ class Dashboard(QWidget):
         # Subjudul dan Form Input
         subtitle = create_label("Masuk menggunakan alamat email dan sandi", font_size=16)
 
-        self.email_input = create_input("Alamat Email")
+        self.nidn_input = create_input("NIDN")
         self.password_input = create_input("Kata Sandi", password=True)
 
         login_button = create_button("Masuk", "#605DEC", lambda: self.loginPressed())
@@ -240,8 +271,10 @@ class Dashboard(QWidget):
         # Tambah ke layout modal
         modal_layout.addLayout(header_layout)
         modal_layout.addWidget(subtitle)
-        modal_layout.addWidget(self.email_input)
+        modal_layout.addWidget(self.nidn_input)
         modal_layout.addWidget(self.password_input)
         modal_layout.addWidget(login_button)
+        modal_layout.addWidget(self.error_label)
+
         modal_layout.addStretch()
 

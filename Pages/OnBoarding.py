@@ -52,7 +52,7 @@ class OnBoarding(QWidget):
         self.loading_label.raise_()  # GIF muncul di depan background
 
         # Mengatur timer untuk berpindah ke halaman dashboard setelah 5 detik
-        QTimer.singleShot(5000, self.switch_to_dashboard)
+        QTimer.singleShot(1000, self.switch_to_dashboard)
 
     def switch_to_dashboard(self):
         # Mengakses halaman dashboard dari MainWindow dan beralih ke halaman tersebut
